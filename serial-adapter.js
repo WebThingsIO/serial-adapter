@@ -8,10 +8,13 @@
 
 'use strict';
 
-const USE_NET = true;
+const USE_NET = false;
 const SHOW_RX_DATA = false;
 
+const Adapter = require('../adapter');
+const Device = require('../device');
 const Packet = require('./packet');
+const Property = require('../property');
 
 var net;
 var SerialPort;
@@ -22,13 +25,72 @@ if (USE_NET) {
   SerialPort = require('serialport');
 }
 
-class SerialAdapter {
+// The property.js file has a function call copyDescriptionFieldsInto
+// which should have been made a static method. Since it wasn't done this
+// way for the 0.3.0 release, I've just copied the function here.
+
+const DESCR_FIELDS = ['type', 'unit', 'description', 'min', 'max'];
+function copyDescrFieldsInto(target, source) {
+  for (let field of DESCR_FIELDS) {
+    if (source.hasOwnProperty(field)) {
+      target[field] = source[field];
+    }
+  }
+}
+
+class SerialProperty extends Property {
+
+  constructor(device, msgData) {
+    let propertyDescr = {};
+    copyDescrFieldsInto(propertyDescr, msgData);
+    super(device, msgData.name, propertyDescr);
+    this.setCachedValue(msgData.value);
+  }
+
+  /**
+   * @method setValue
+   * @returns a promise which resolves to the updated value.
+   *
+   * @note it is possible that the updated value doesn't match
+   * the value passed in.
+   */
+  setValue(value) {
+    this.device.send('setProperty', {
+      name: this.name,
+      value: value
+    });
+    // We don't rely on the device to tell us that the value changed,
+    // so we resolve the promise right away.
+    return Promise.resolve(value);
+  }
+}
+
+class SerialThing extends Device {
+
+  constructor(adapter, msgData) {
+    super(adapter, msgData.id);
+    this.name = msgData.name;
+    this.type = msgData.type;
+    this.description = msgData.description;
+  }
+
+  addProperty(msgData) {
+    this.properties.set(msgData.name, new SerialProperty(this, msgData));
+  }
+
+  send(cmd, data) {
+    data.id = this.id;
+    this.adapter.send(cmd, data);
+  }
+}
+
+class SerialAdapter extends Adapter {
 
   constructor(addonManager, manifest, port) {
     // We don't yet know the name of the adapter, so we set it to
     // unknown for now, and replace it later once we get the information
     // from the device.
-    //super(addonManager, 'serial-unknown', manifest.name);
+    super(addonManager, 'serial-unknown', manifest.name);
 
     this.manifest = manifest;
     this.port = port;
@@ -74,57 +136,86 @@ class SerialAdapter {
     });
   }
 
-  onAdapter(data) {
-    console.log('Adapter:', data.id,
-                'name:', data.name,
-                'thingCount:', data.thingCount);
+  onAdapter(msgData) {
+    console.log('Adapter:', msgData.id,
+                'name:', msgData.name,
+                'thingCount:', msgData.thingCount);
 
-    // Add adapter
+    this.id = msgData.id;
+    this.name = msgData.name;
 
-    this.thingCount = data.thingCount;
+    this.manager.addAdapter(this);
+
+    this.thingCount = msgData.thingCount;
     this.thingIdx = 0;
-    this.send('getThingByIdx', {thingIdx: 0});
+    this.send('getThingByIdx', {
+      thingIdx: 0
+    });
   }
 
-  onThing(data) {
-    console.log('Thing:', data.id,
-                'name:', data.name,
-                'type:', data.type,
-                'description:', data.description,
-                'propertyCount:', data.propertyCount);
-    this.thingId = data.id;
-    this.propertyCount = data.propertyCount;
+  onThing(msgData) {
+    console.log('Thing:', msgData.id,
+                'name:', msgData.name,
+                'type:', msgData.type,
+                'description:', msgData.description,
+                'propertyCount:', msgData.propertyCount);
+    this.newThing = new SerialThing(this, msgData);
+    this.propertyCount = msgData.propertyCount;
     this.propertyIdx = 0;
-    this.send('getPropertyByIdx', {thingIdx: this.thingIdx, propertyIdx: 0});
+    this.send('getPropertyByIdx', {
+      thingIdx: this.thingIdx,
+      propertyIdx: 0
+    });
   }
 
   onThingDone() {
-    // Add thing
+    this.handleDeviceAdded(this.newThing);
+    this.newThing = null;
 
     this.thingIdx += 1;
     if (this.thingIdx < this.thingCount) {
-      this.send('getThingByIdx', {thingIdx: this.thingIdx});
-    } else {
-      this.send('setProperty', {
-        id: this.thingId,
-        name: "on",
-        value: "true"
+      this.send('getThingByIdx', {
+        thingIdx: this.thingIdx
       });
     }
   }
 
-  onProperty(data) {
-    console.log('Property:', data.name, 'type:', data.type, 'value:', data.value);
+  onProperty(msgData) {
+    console.log('Property:', msgData.name,
+                'type:', msgData.type,
+                'value:', msgData.value);
+    if (this.newThing) {
+      this.newThing.addProperty(msgData);
+    }
+
     this.propertyIdx += 1;
     if (this.propertyIdx < this.propertyCount) {
-      this.send('getPropertyByIdx', {thingIdx: this.thingIdx, propertyIdx: this.propertyIdx});
+      this.send('getPropertyByIdx', {
+        thingIdx: this.thingIdx,
+        propertyIdx: this.propertyIdx
+      });
     } else {
       this.onThingDone();
     }
   }
 
-  onPropertyChanged(data) {
-    console.log('PropertyChanged: id:', data.id, 'name:', data.name, 'value:', data.value);
+  onPropertyChanged(msgData) {
+    console.log('PropertyChanged: id:', msgData.id,
+                'name:', msgData.name,
+                'value:', msgData.value);
+
+    let thing = this.getDevice(msgData.id);
+    if (thing) {
+      let property = thing.findProperty(msgData.name);
+      if (property) {
+        property.setCachedValue(msgData.value);
+        thing.notifyPropertyChanged(property);
+      } else {
+        console.log('propertyChanged for unknown property:', msgData.name, '- ignoring');
+      }
+    } else {
+      console.log('propertyChanged for unknown thing:', msgData.id, '- ignoring');
+    }
   }
 
   onData(data) {

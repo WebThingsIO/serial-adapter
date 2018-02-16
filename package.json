@@ -22,7 +22,7 @@
   "files": [
     "LICENSE",
     "SHA256SUMS",
-    "serial.js",
+    "serial-adapter.js",
     "index.js"
   ],
   "moziot": {
