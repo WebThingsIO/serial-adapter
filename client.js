@@ -13,6 +13,12 @@
 const net = require('net');
 const Packet = require('./packet');
 
+var rxPacket = new Packet();
+rxPacket.showBytes = false;
+rxPacket.showPackets = false;
+
+const SHOW_RX_DATA = false;
+
 let client = new net.createConnection({port: 7788}, () => {
   console.log('Connected to server');
   client.write(Packet.makePacket(Buffer.from(JSON.stringify({
@@ -22,7 +28,13 @@ let client = new net.createConnection({port: 7788}, () => {
   }))));
 });
 client.on('data', (data) => {
-  console.log('Got data:', data);
+  SHOW_RX_DATA && console.log('Got data:', data);
+  for (let byte of data) {
+    let pkt = rxPacket.processByte(byte);
+    if (pkt) {
+      console.log('Got packet:', pkt);
+    }
+  }
 });
 client.on('end', () => {
   console.log('Disconnected from server');

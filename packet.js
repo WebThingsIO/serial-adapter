@@ -42,8 +42,8 @@ class Packet {
 
   constructor() {
     this.state = STATE.SOH;
-    this.showPackets = true;
-    this.showBytes = true;
+    this.showPackets = false;
+    this.showBytes = false;
     this.length = 0;
   }
 
@@ -70,6 +70,7 @@ class Packet {
         this.buffer = Buffer.alloc(this.length);
         this.state = STATE.STX;
         this.lrc = 0;
+        this.index = 0;
         break;
       case STATE.STX:
         if (byte == STX) {
@@ -112,6 +113,9 @@ class Packet {
         this.state = STATE.SOH;
         if (byte == EOT) {
           // We successfully got a packet
+          if (this.showPackets) {
+            console.log('Rcvd Packet:', this.buffer);
+          }
           return this.buffer;
         }
         break;
