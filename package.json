@@ -22,8 +22,11 @@
   "files": [
     "LICENSE",
     "SHA256SUMS",
+    "index.js",
     "serial-adapter.js",
-    "index.js"
+    "packet.js",
+    "list-ports.js",
+    "utils.js"
   ],
   "moziot": {
     "api": {
