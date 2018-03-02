@@ -11,10 +11,23 @@
 const USE_NET = false;
 const SHOW_RX_DATA = false;
 
-const Adapter = require('../adapter');
-const Device = require('../device');
 const Packet = require('./packet');
-const Property = require('../property');
+
+let Adapter, Device, Property;
+try {
+  Adapter = require('../adapter');
+  Device = require('../device');
+  Property = require('../property');
+} catch (e) {
+  if (e.code !== 'MODULE_NOT_FOUND') {
+    throw e;
+  }
+
+  const gwa = require('gateway-addon');
+  Adapter = gwa.Adapter;
+  Device = gwa.Device;
+  Property = gwa.Property;
+}
 
 var net;
 var SerialPort;
