@@ -224,10 +224,12 @@ class SerialAdapter extends Adapter {
         property.setCachedValue(msgData.value);
         thing.notifyPropertyChanged(property);
       } else {
-        console.log('propertyChanged for unknown property:', msgData.name, '- ignoring');
+        console.log('propertyChanged for unknown property:', msgData.name,
+                    '- ignoring');
       }
     } else {
-      console.log('propertyChanged for unknown thing:', msgData.id, '- ignoring');
+      console.log('propertyChanged for unknown thing:', msgData.id,
+                  '- ignoring');
     }
   }
 
@@ -283,11 +285,21 @@ class SerialAdapter extends Adapter {
 
 function serialPortMatches(port, portsConfig) {
   // We only filter using keys from the following:
-  const compareKeys = ["manufacturer",
-                       "vendorId",
-                       "productId",
-                       "serialNumber",
-                       "comName"];
+  const compareKeys = ['manufacturer',
+                       'vendorId',
+                       'productId',
+                       'serialNumber',
+                       'comName'];
+
+  if (!Array.isArray(portsConfig)) {
+    const newConfig = [];
+    for (const name in portsConfig) {
+      const config = portsConfig[name];
+      config.name = name;
+      newConfig.push(config);
+    }
+    portsConfig = newConfig;
+  }
 
   // Under OSX, SerialPort.list returns the /dev/tty.usbXXX instead
   // /dev/cu.usbXXX. tty.usbXXX requires DCD to be asserted which
@@ -296,9 +308,7 @@ function serialPortMatches(port, portsConfig) {
   if (port.comName.startsWith('/dev/tty.usb')) {
     port.comName = port.comName.replace('/dev/tty', '/dev/cu');
   }
-  for (const name in portsConfig) {
-    const portConfig = portsConfig[name];
-
+  for (const portConfig of portsConfig) {
     const configKeys = Object.keys(portConfig)
                              .filter(ck => compareKeys.indexOf(ck) >= 0);
     if (configKeys.length == 0) {
@@ -353,7 +363,7 @@ function loadSerial(addonManager, manifest, errorCallback) {
   });
 }
 
-function loadNet(addonManager, manifest, errorCallback) {
+function loadNet(addonManager, manifest, _errorCallback) {
   new SerialAdapter(addonManager, manifest, 'tcp');
 }
 

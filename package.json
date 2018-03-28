@@ -1,6 +1,6 @@
 {
   "name": "serial-adapter",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Serial MCU Adapter",
   "main": "index.js",
   "keywords": [
@@ -39,9 +39,48 @@
     "plugin": true,
     "exec": "{nodeLoader} {path}",
     "config": {
-      "ports": {
-        "arduino-usb": {
+      "ports": [
+        {
+          "name": "arduino-usb",
           "manufacturer": "Arduino"
+        }
+      ]
+    },
+    "schema": {
+      "type": "object",
+      "properties": {
+        "ports": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "manufacturer": {
+                "type": "string"
+              },
+              "vendorId": {
+                "type": "string"
+              },
+              "productId": {
+                "type": "string"
+              },
+              "serialNumber": {
+                "type": "string"
+              },
+              "comName": {
+                "type": "string"
+              },
+              "baudRate": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
         }
       }
     }
