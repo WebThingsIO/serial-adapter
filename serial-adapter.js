@@ -13,7 +13,7 @@ const SHOW_RX_DATA = false;
 
 const Packet = require('./packet');
 
-let Adapter, Device, Property;
+let Adapter, Database, Device, Property;
 try {
   Adapter = require('../adapter');
   Device = require('../device');
@@ -25,6 +25,7 @@ try {
 
   const gwa = require('gateway-addon');
   Adapter = gwa.Adapter;
+  Database = gwa.Database;
   Device = gwa.Device;
   Property = gwa.Property;
 }
@@ -340,26 +341,52 @@ function serialPortMatches(port, portsConfig) {
 }
 
 function loadSerial(addonManager, manifest, errorCallback) {
-  let portsConfig = manifest.moziot &&
-                    manifest.moziot.config &&
-                    manifest.moziot.config.ports;
-  if (!portsConfig) {
-    errorCallback('No moziot.config.ports found in package.json');
-    return;
+  let promise;
+
+  // Attempt to move to new config format.
+  if (Database) {
+    const db = new Database(manifest.name);
+    db.open();
+    promise = db.loadConfig().then((config) => {
+      if (!Array.isArray(config.ports)) {
+        const ports = [];
+
+        for (const portName in config.ports) {
+          const port = Object.assign({}, config.ports[portName]);
+          port.name = portName;
+          ports.push(port);
+        }
+
+        manifest.moziot.config.ports = ports;
+        return db.saveConfig({ports});
+      }
+    });
+  } else {
+    promise = Promise.resolve();
   }
 
-  SerialPort.list().then(ports => {
-    let matchingPorts =
-      ports.filter(port => serialPortMatches(port, portsConfig));
-    if (matchingPorts.length == 0) {
-      errorCallback('No matching serial port found');
+  promise.then(() => {
+    let portsConfig = manifest.moziot &&
+                      manifest.moziot.config &&
+                      manifest.moziot.config.ports;
+    if (!portsConfig) {
+      errorCallback('No moziot.config.ports found in package.json');
       return;
     }
-    for (const port of matchingPorts) {
-      new SerialAdapter(addonManager, manifest, port);
-    }
-  }).catch(e => {
-    errorCallback(e);
+
+    SerialPort.list().then(ports => {
+      let matchingPorts =
+        ports.filter(port => serialPortMatches(port, portsConfig));
+      if (matchingPorts.length == 0) {
+        errorCallback('No matching serial port found');
+        return;
+      }
+      for (const port of matchingPorts) {
+        new SerialAdapter(addonManager, manifest, port);
+      }
+    }).catch(e => {
+      errorCallback(e);
+    });
   });
 }
 
