@@ -6,11 +6,11 @@ const utils = require('./utils');
 
 function serialPortMatches(port, portsConfig) {
   // We only filter using keys from the following:
-  const compareKeys = ["manufacturer",
-                       "vendorId",
-                       "productId",
-                       "serialNumber",
-                       "comName"];
+  const compareKeys = ['manufacturer',
+                       'vendorId',
+                       'productId',
+                       'serialNumber',
+                       'comName'];
 
   // Under OSX, SerialPort.list returns the /dev/tty.usbXXX instead
   // /dev/cu.usbXXX. tty.usbXXX requires DCD to be asserted which

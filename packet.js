@@ -36,7 +36,14 @@ const STATE = {
   LRC: 6,
   EOT: 7
 };
-const STATE_STR = ['SOH', 'LEN_0', 'LEN_1', 'STX', 'PAYLOAD', 'ETX', 'LRC', 'EOT'];
+const STATE_STR = ['SOH',
+                   'LEN_0',
+                   'LEN_1',
+                   'STX',
+                   'PAYLOAD',
+                   'ETX',
+                   'LRC',
+                   'EOT'];
 
 class Packet {
 

@@ -13,7 +13,7 @@ const SHOW_RX_DATA = false;
 
 const Packet = require('./packet');
 
-let Adapter, Device, Property;
+let Adapter, Database, Device, Property;
 try {
   Adapter = require('../adapter');
   Device = require('../device');
@@ -25,6 +25,7 @@ try {
 
   const gwa = require('gateway-addon');
   Adapter = gwa.Adapter;
+  Database = gwa.Database;
   Device = gwa.Device;
   Property = gwa.Property;
 }
@@ -224,10 +225,12 @@ class SerialAdapter extends Adapter {
         property.setCachedValue(msgData.value);
         thing.notifyPropertyChanged(property);
       } else {
-        console.log('propertyChanged for unknown property:', msgData.name, '- ignoring');
+        console.log('propertyChanged for unknown property:', msgData.name,
+                    '- ignoring');
       }
     } else {
-      console.log('propertyChanged for unknown thing:', msgData.id, '- ignoring');
+      console.log('propertyChanged for unknown thing:', msgData.id,
+                  '- ignoring');
     }
   }
 
@@ -283,11 +286,21 @@ class SerialAdapter extends Adapter {
 
 function serialPortMatches(port, portsConfig) {
   // We only filter using keys from the following:
-  const compareKeys = ["manufacturer",
-                       "vendorId",
-                       "productId",
-                       "serialNumber",
-                       "comName"];
+  const compareKeys = ['manufacturer',
+                       'vendorId',
+                       'productId',
+                       'serialNumber',
+                       'comName'];
+
+  if (!Array.isArray(portsConfig)) {
+    const newConfig = [];
+    for (const name in portsConfig) {
+      const config = portsConfig[name];
+      config.name = name;
+      newConfig.push(config);
+    }
+    portsConfig = newConfig;
+  }
 
   // Under OSX, SerialPort.list returns the /dev/tty.usbXXX instead
   // /dev/cu.usbXXX. tty.usbXXX requires DCD to be asserted which
@@ -296,9 +309,7 @@ function serialPortMatches(port, portsConfig) {
   if (port.comName.startsWith('/dev/tty.usb')) {
     port.comName = port.comName.replace('/dev/tty', '/dev/cu');
   }
-  for (const name in portsConfig) {
-    const portConfig = portsConfig[name];
-
+  for (const portConfig of portsConfig) {
     const configKeys = Object.keys(portConfig)
                              .filter(ck => compareKeys.indexOf(ck) >= 0);
     if (configKeys.length == 0) {
@@ -330,30 +341,57 @@ function serialPortMatches(port, portsConfig) {
 }
 
 function loadSerial(addonManager, manifest, errorCallback) {
-  let portsConfig = manifest.moziot &&
-                    manifest.moziot.config &&
-                    manifest.moziot.config.ports;
-  if (!portsConfig) {
-    errorCallback('No moziot.config.ports found in package.json');
-    return;
+  let promise;
+
+  // Attempt to move to new config format.
+  if (Database) {
+    const db = new Database(manifest.name);
+    promise = db.open().then(() => {
+      return db.loadConfig();
+    }).then((config) => {
+      if (!Array.isArray(config.ports)) {
+        const ports = [];
+
+        for (const portName in config.ports) {
+          const port = Object.assign({}, config.ports[portName]);
+          port.name = portName;
+          ports.push(port);
+        }
+
+        manifest.moziot.config.ports = ports;
+        return db.saveConfig({ports});
+      }
+    });
+  } else {
+    promise = Promise.resolve();
   }
 
-  SerialPort.list().then(ports => {
-    let matchingPorts =
-      ports.filter(port => serialPortMatches(port, portsConfig));
-    if (matchingPorts.length == 0) {
-      errorCallback('No matching serial port found');
+  promise.then(() => {
+    let portsConfig = manifest.moziot &&
+                      manifest.moziot.config &&
+                      manifest.moziot.config.ports;
+    if (!portsConfig) {
+      errorCallback('No moziot.config.ports found in package.json');
       return;
     }
-    for (const port of matchingPorts) {
-      new SerialAdapter(addonManager, manifest, port);
-    }
-  }).catch(e => {
-    errorCallback(e);
+
+    SerialPort.list().then(ports => {
+      let matchingPorts =
+        ports.filter(port => serialPortMatches(port, portsConfig));
+      if (matchingPorts.length == 0) {
+        errorCallback('No matching serial port found');
+        return;
+      }
+      for (const port of matchingPorts) {
+        new SerialAdapter(addonManager, manifest, port);
+      }
+    }).catch(e => {
+      errorCallback(e);
+    });
   });
 }
 
-function loadNet(addonManager, manifest, errorCallback) {
+function loadNet(addonManager, manifest, _errorCallback) {
   new SerialAdapter(addonManager, manifest, 'tcp');
 }
 
