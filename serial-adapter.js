@@ -30,8 +30,8 @@ try {
   Property = gwa.Property;
 }
 
-var net;
-var SerialPort;
+let net;
+let SerialPort;
 
 if (USE_NET) {
   net = require('net');
@@ -45,7 +45,7 @@ if (USE_NET) {
 
 const DESCR_FIELDS = ['type', 'unit', 'description', 'min', 'max'];
 function copyDescrFieldsInto(target, source) {
-  for (let field of DESCR_FIELDS) {
+  for (const field of DESCR_FIELDS) {
     if (source.hasOwnProperty(field)) {
       target[field] = source[field];
     }
@@ -55,7 +55,7 @@ function copyDescrFieldsInto(target, source) {
 class SerialProperty extends Property {
 
   constructor(device, msgData) {
-    let propertyDescr = {};
+    const propertyDescr = {};
     copyDescrFieldsInto(propertyDescr, msgData);
     super(device, msgData.name, propertyDescr);
     this.setCachedValue(msgData.value);
@@ -71,7 +71,7 @@ class SerialProperty extends Property {
   setValue(value) {
     this.device.send('setProperty', {
       name: this.name,
-      value: value
+      value: value,
     });
     // We don't rely on the device to tell us that the value changed,
     // so we resolve the promise right away.
@@ -110,27 +110,27 @@ class SerialAdapter extends Adapter {
     this.port = port;
 
     if (USE_NET) {
-      let options = {
+      const options = {
         host: 'localhost',
-        port: 7788
+        port: 7788,
       };
-      const hostStr = options.host + ':' + options.port;
+      const hostStr = `${options.host}:${options.port}`;
       this.serialport = new net.createConnection(options, () => {
         console.log('Opened TCP connection to', hostStr);
         this.onOpen();
       });
-      this.serialport.on('error', err => {
+      this.serialport.on('error', (err) => {
         console.error('Unable to connect to', hostStr);
         console.log(err.message);
       });
       this.serialport.on('end', () => {
         // The server shutdown
-        console.log ('Server', hostStr, 'shutdown');
+        console.log('Server', hostStr, 'shutdown');
       });
     } else {
       this.serialport = new SerialPort(port.comName, {
-        baudRate: port.baudRate
-      }, err => {
+        baudRate: port.baudRate,
+      }, (err) => {
         if (err) {
           console.error('Unable to open serial port', port.comName);
           console.error(err);
@@ -145,7 +145,7 @@ class SerialAdapter extends Adapter {
     this.rxPacket.showBytes = false;
     this.rxPacket.showPackets = false;
 
-    this.serialport.on('data', data => {
+    this.serialport.on('data', (data) => {
       this.onData(data);
     });
   }
@@ -163,7 +163,7 @@ class SerialAdapter extends Adapter {
     this.thingCount = msgData.thingCount;
     this.thingIdx = 0;
     this.send('getThingByIdx', {
-      thingIdx: 0
+      thingIdx: 0,
     });
   }
 
@@ -178,7 +178,7 @@ class SerialAdapter extends Adapter {
     this.propertyIdx = 0;
     this.send('getPropertyByIdx', {
       thingIdx: this.thingIdx,
-      propertyIdx: 0
+      propertyIdx: 0,
     });
   }
 
@@ -189,7 +189,7 @@ class SerialAdapter extends Adapter {
     this.thingIdx += 1;
     if (this.thingIdx < this.thingCount) {
       this.send('getThingByIdx', {
-        thingIdx: this.thingIdx
+        thingIdx: this.thingIdx,
       });
     }
   }
@@ -206,7 +206,7 @@ class SerialAdapter extends Adapter {
     if (this.propertyIdx < this.propertyCount) {
       this.send('getPropertyByIdx', {
         thingIdx: this.thingIdx,
-        propertyIdx: this.propertyIdx
+        propertyIdx: this.propertyIdx,
       });
     } else {
       this.onThingDone();
@@ -218,9 +218,9 @@ class SerialAdapter extends Adapter {
                 'name:', msgData.name,
                 'value:', msgData.value);
 
-    let thing = this.getDevice(msgData.id);
+    const thing = this.getDevice(msgData.id);
     if (thing) {
-      let property = thing.findProperty(msgData.name);
+      const property = thing.findProperty(msgData.name);
       if (property) {
         property.setCachedValue(msgData.value);
         thing.notifyPropertyChanged(property);
@@ -236,8 +236,8 @@ class SerialAdapter extends Adapter {
 
   onData(data) {
     SHOW_RX_DATA && console.log('Got data:', data);
-    for (let byte of data) {
-      let buf = this.rxPacket.processByte(byte);
+    for (const byte of data) {
+      const buf = this.rxPacket.processByte(byte);
       if (buf) {
         console.log('Rcvd:', buf.toString());
 
@@ -275,9 +275,9 @@ class SerialAdapter extends Adapter {
     if (!data) {
       data = {};
     }
-    let msg = JSON.stringify({
+    const msg = JSON.stringify({
       messageType: cmd,
-      data: data
+      data: data,
     });
     this.serialport.write(Packet.makePacket(Buffer.from(msg)));
     console.log(`Sent '${msg}'`);
@@ -310,17 +310,17 @@ function serialPortMatches(port, portsConfig) {
     port.comName = port.comName.replace('/dev/tty', '/dev/cu');
   }
   for (const portConfig of portsConfig) {
-    const configKeys = Object.keys(portConfig)
-                             .filter(ck => compareKeys.indexOf(ck) >= 0);
+    const configKeys =
+      Object.keys(portConfig).filter((ck) => compareKeys.indexOf(ck) >= 0);
     if (configKeys.length == 0) {
       // No keys - it doesn't match
       continue;
     }
     let match = true;
     for (const configKey of configKeys) {
-      let configVal = portConfig[configKey];
-      let portVal = port[configKey];
-      if (typeof(portVal) != 'string' || !portVal.startsWith(configVal)) {
+      const configVal = portConfig[configKey];
+      const portVal = port[configKey];
+      if (typeof portVal !== 'string' || !portVal.startsWith(configVal)) {
         match = false;
       }
     }
@@ -367,17 +367,17 @@ function loadSerial(addonManager, manifest, errorCallback) {
   }
 
   promise.then(() => {
-    let portsConfig = manifest.moziot &&
-                      manifest.moziot.config &&
-                      manifest.moziot.config.ports;
+    const portsConfig = manifest.moziot &&
+                        manifest.moziot.config &&
+                        manifest.moziot.config.ports;
     if (!portsConfig) {
       errorCallback('No moziot.config.ports found in package.json');
       return;
     }
 
-    SerialPort.list().then(ports => {
-      let matchingPorts =
-        ports.filter(port => serialPortMatches(port, portsConfig));
+    SerialPort.list().then((ports) => {
+      const matchingPorts =
+        ports.filter((port) => serialPortMatches(port, portsConfig));
       if (matchingPorts.length == 0) {
         errorCallback('No matching serial port found');
         return;
@@ -385,7 +385,7 @@ function loadSerial(addonManager, manifest, errorCallback) {
       for (const port of matchingPorts) {
         new SerialAdapter(addonManager, manifest, port);
       }
-    }).catch(e => {
+    }).catch((e) => {
       errorCallback(e);
     });
   });

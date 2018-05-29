@@ -34,7 +34,7 @@ const STATE = {
   PAYLOAD: 4,
   ETX: 5,
   LRC: 6,
-  EOT: 7
+  EOT: 7,
 };
 const STATE_STR = ['SOH',
                    'LEN_0',
@@ -56,9 +56,10 @@ class Packet {
 
   processByte(byte) {
     if (this.showBytes) {
-      let ch = (byte >= 0x20 && byte <= 0x7e) ? String.fromCharCode(byte) : '.';
-      console.log('State:', padLeft(STATE_STR[this.state], 7),
-                  'Rcvd 0x' + hexStr(byte, 2), '\'' + ch + '\'');
+      const ch =
+        (byte >= 0x20 && byte <= 0x7e) ? String.fromCharCode(byte) : '.';
+      console.log(`State: ${padLeft(STATE_STR[this.state], 7)
+      } Rcvd 0x${hexStr(byte, 2)} '${ch}'`);
     }
 
     switch (this.state) {
@@ -110,8 +111,8 @@ class Packet {
         if (byte == this.lrc) {
           this.state = STATE.EOT;
         } else {
-          console.error('Got LRC: 0x' + hexStr(byte, 2) +
-                        ', expected 0x' + hexStr(this.lrc, 2));
+          console.error(
+            `Got LRC: 0x${hexStr(byte, 2)}, expected 0x${hexStr(this.lrc, 2)}`);
           this.state = STATE.SOH;
         }
         break;
@@ -131,20 +132,20 @@ class Packet {
 
   static LRC(data) {
     let lrc = 0;
-    for (let byte of data) {
+    for (const byte of data) {
       lrc += byte;
     }
     return ((lrc ^ 0xff) + 1) & 0xff;
   }
 
   static makePacket(data) {
-    let buf = Buffer.alloc(data.length + OVERHEAD_SIZE);
+    const buf = Buffer.alloc(data.length + OVERHEAD_SIZE);
     buf[0] = SOH;
     buf[1] = data.length & 0xff;
     buf[2] = (data.length >> 8) & 0xff;
     buf[3] = STX;
     data.copy(buf, HEADER_SIZE);
-    let trailer = buf.slice(data.length + HEADER_SIZE);
+    const trailer = buf.slice(data.length + HEADER_SIZE);
     trailer[0] = ETX;
     trailer[1] = Packet.LRC(data);
     trailer[2] = EOT;
