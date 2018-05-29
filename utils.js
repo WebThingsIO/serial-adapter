@@ -9,7 +9,7 @@
 
 'use strict';
 
-var utils = module.exports = {};
+const utils = module.exports = {};
 
 function repeatChar(char, len) {
   if (len <= 0) {
@@ -38,7 +38,7 @@ function alignCenter(str, len) {
   if (str.length >= len) {
     return str.slice(0, len);
   }
-  var leftSpace = parseInt((len - str.length) / 2);
+  const leftSpace = parseInt((len - str.length) / 2);
   return padRight(padLeft(str, str.length + leftSpace), len);
 }
 
@@ -52,16 +52,16 @@ function alignCenter(str, len) {
  * character is found, then left alignment is assumed.
  */
 function printTable(alignment, lines) {
-  var width = [];
-  var colWidth;
-  var idx;
+  const width = [];
+  let colWidth;
+  let idx;
 
   // Take a pass through the data and figure out the width for each column.
-  for (var line of lines) {
-    if (typeof(line) !== 'string') {
+  for (const line of lines) {
+    if (typeof line !== 'string') {
       for (idx in line) {
         colWidth = line[idx].length;
-        if (width[idx] === undefined || colWidth > width[idx]) {
+        if (typeof width[idx] === 'undefined' || colWidth > width[idx]) {
           width[idx] = colWidth;
         }
       }
@@ -69,19 +69,19 @@ function printTable(alignment, lines) {
   }
 
   // Now that we know how wide each column is, go and print them.
-  for (line of lines) {
-    var lineStr = '';
+  for (const line of lines) {
+    let lineStr = '';
     for (idx in width) {
       if (idx > 0) {
         lineStr += ' ';
       }
       colWidth = width[idx];
-      if (typeof(line) === 'string') {
+      if (typeof line === 'string') {
         lineStr += repeatChar(line[0], colWidth);
       } else {
-        var align = alignment[idx];
-        var field = line[idx];
-        if (field === undefined) {
+        const align = alignment[idx];
+        let field = line[idx];
+        if (typeof field === 'undefined') {
           field = '';
         }
         if (align === '>') {

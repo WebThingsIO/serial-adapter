@@ -22,17 +22,17 @@ function serialPortMatches(port, portsConfig) {
   for (const name in portsConfig) {
     const portConfig = portsConfig[name];
 
-    const configKeys = Object.keys(portConfig)
-                             .filter(ck => compareKeys.indexOf(ck) >= 0);
+    const configKeys =
+      Object.keys(portConfig).filter((ck) => compareKeys.indexOf(ck) >= 0);
     if (configKeys.length == 0) {
       // No keys - it doesn't match
       continue;
     }
     let match = true;
     for (const configKey of configKeys) {
-      let configVal = portConfig[configKey];
-      let portVal = port[configKey];
-      if (typeof(portVal) != 'string' || !portVal.startsWith(configVal)) {
+      const configVal = portConfig[configKey];
+      const portVal = port[configKey];
+      if (typeof portVal !== 'string' || !portVal.startsWith(configVal)) {
         match = false;
       }
     }
@@ -53,12 +53,12 @@ function serialPortMatches(port, portsConfig) {
 }
 
 function printPorts(ports) {
-  let lines = [
+  const lines = [
     ['comPort', 'vendorId', 'productId', 'serialNumber', 'manufacturer'],
-    '-'
+    '-',
   ];
 
-  for (let port of ports) {
+  for (const port of ports) {
     if (port.comName.startsWith('/dev/tty.usb')) {
       port.comName = port.comName.replace('/dev/tty', '/dev/cu');
     }
@@ -72,28 +72,28 @@ function printPorts(ports) {
   utils.printTable('<<<<<', lines);
 }
 
-SerialPort.list().then(ports => {
+SerialPort.list().then((ports) => {
   // First print a list of all of the ports
   console.log('===== All ports found =====');
   printPorts(ports);
 
   const manifestData = fs.readFileSync('package.json');
   const manifest = JSON.parse(manifestData);
-  let portsConfig = manifest.moziot &&
-                    manifest.moziot.config &&
-                    manifest.moziot.config.ports;
+  const portsConfig = manifest.moziot &&
+                      manifest.moziot.config &&
+                      manifest.moziot.config.ports;
   if (!portsConfig) {
     console.log('No moziot.config.ports found in package.json');
     return;
   }
 
-  for (let name in portsConfig) {
+  for (const name in portsConfig) {
     console.log('');
     console.log('===== Serial ports which match filter', name, '=====');
-    let portConfig = {};
+    const portConfig = {};
     portConfig[name] = portsConfig[name];
-    let matchingPorts =
-      ports.filter(port => serialPortMatches(port, portConfig));
+    const matchingPorts =
+      ports.filter((port) => serialPortMatches(port, portConfig));
     printPorts(matchingPorts);
   }
 });
