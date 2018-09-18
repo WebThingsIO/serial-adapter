@@ -371,7 +371,8 @@ function loadSerial(addonManager, manifest, errorCallback) {
                         manifest.moziot.config &&
                         manifest.moziot.config.ports;
     if (!portsConfig) {
-      errorCallback('No moziot.config.ports found in package.json');
+      errorCallback(manifest.name,
+                    'No moziot.config.ports found in package.json');
       return;
     }
 
@@ -379,14 +380,14 @@ function loadSerial(addonManager, manifest, errorCallback) {
       const matchingPorts =
         ports.filter((port) => serialPortMatches(port, portsConfig));
       if (matchingPorts.length == 0) {
-        errorCallback('No matching serial port found');
+        errorCallback(manifest.name, 'No matching serial port found');
         return;
       }
       for (const port of matchingPorts) {
         new SerialAdapter(addonManager, manifest, port);
       }
     }).catch((e) => {
-      errorCallback(e);
+      errorCallback(manifest.name, e);
     });
   });
 }
