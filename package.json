@@ -1,7 +1,7 @@
 {
   "name": "serial-adapter",
   "display_name": "Serial",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Serial MCU Adapter",
   "main": "index.js",
   "keywords": [
