@@ -13,22 +13,12 @@ const SHOW_RX_DATA = false;
 
 const Packet = require('./packet');
 
-let Adapter, Database, Device, Property;
-try {
-  Adapter = require('../adapter');
-  Device = require('../device');
-  Property = require('../property');
-} catch (e) {
-  if (e.code !== 'MODULE_NOT_FOUND') {
-    throw e;
-  }
-
-  const gwa = require('gateway-addon');
-  Adapter = gwa.Adapter;
-  Database = gwa.Database;
-  Device = gwa.Device;
-  Property = gwa.Property;
-}
+const {
+  Adapter,
+  Database,
+  Device,
+  Property,
+} = require('gateway-addon');
 
 let net;
 let SerialPort;
@@ -343,28 +333,23 @@ function serialPortMatches(port, portsConfig) {
 function loadSerial(addonManager, manifest, errorCallback) {
   let promise;
 
-  // Attempt to move to new config format.
-  if (Database) {
-    const db = new Database(manifest.name);
-    promise = db.open().then(() => {
-      return db.loadConfig();
-    }).then((config) => {
-      if (!Array.isArray(config.ports)) {
-        const ports = [];
+  const db = new Database(manifest.name);
+  promise = db.open().then(() => {
+    return db.loadConfig();
+  }).then((config) => {
+    if (!Array.isArray(config.ports)) {
+      const ports = [];
 
-        for (const portName in config.ports) {
-          const port = Object.assign({}, config.ports[portName]);
-          port.name = portName;
-          ports.push(port);
-        }
-
-        manifest.moziot.config.ports = ports;
-        return db.saveConfig({ports});
+      for (const portName in config.ports) {
+        const port = Object.assign({}, config.ports[portName]);
+        port.name = portName;
+        ports.push(port);
       }
-    });
-  } else {
-    promise = Promise.resolve();
-  }
+
+      manifest.moziot.config.ports = ports;
+      return db.saveConfig({ports});
+    }
+  });
 
   promise.then(() => {
     const portsConfig = manifest.moziot &&

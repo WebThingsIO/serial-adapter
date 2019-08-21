@@ -1,9 +1,12 @@
 {
   "name": "serial-adapter",
   "display_name": "Serial",
-  "version": "0.3.5",
+  "version": "0.4.0",
   "description": "Serial MCU Adapter",
   "main": "index.js",
+  "scripts": {
+    "lint": "eslint ."
+  },
   "keywords": [
     "mozilla",
     "iot",
@@ -21,10 +24,11 @@
     "url": "https://github.com/mozilla-iot/serial-adapter/issues"
   },
   "dependencies": {
-    "serialport": "^6.1.1"
+    "serialport": "^7.1.5"
   },
   "devDependencies": {
-    "eslint": "^4.19.1"
+    "babel-eslint": "^10.0.2",
+    "eslint": "^6.2.1"
   },
   "files": [
     "LICENSE",
@@ -37,7 +41,7 @@
   ],
   "moziot": {
     "api": {
-      "min": 1,
+      "min": 2,
       "max": 2
     },
     "plugin": true,
