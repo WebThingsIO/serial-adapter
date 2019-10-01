@@ -1,54 +1,21 @@
 {
-  "name": "serial-adapter",
-  "display_name": "Serial",
-  "version": "0.5.0",
-  "description": "Serial MCU Adapter",
-  "main": "index.js",
-  "scripts": {
-    "lint": "eslint ."
-  },
-  "keywords": [
-    "mozilla",
-    "iot",
-    "adapter",
-    "serial"
-  ],
   "author": "Mozilla IoT",
+  "description": "Serial MCU Adapter",
+  "gateway_specific_settings": {
+    "webthings": {
+      "exec": "{nodeLoader} {path}",
+      "primary_type": "adapter",
+      "strict_max_version": "*",
+      "strict_min_version": "0.10.0"
+    }
+  },
+  "homepage_url": "https://github.com/mozilla-iot/serial-adapter",
+  "id": "serial-adapter",
   "license": "MPL-2.0",
-  "homepage": "https://github.com/mozilla-iot/serial-adapter",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/mozilla-iot/serial-adapter.git"
-  },
-  "bugs": {
-    "url": "https://github.com/mozilla-iot/serial-adapter/issues"
-  },
-  "dependencies": {
-    "serialport": "^7.1.5"
-  },
-  "devDependencies": {
-    "babel-eslint": "^10.0.3",
-    "eslint": "^6.5.1"
-  },
-  "files": [
-    "LICENSE",
-    "README.md",
-    "SHA256SUMS",
-    "index.js",
-    "list-ports.js",
-    "manifest.json",
-    "packet.js",
-    "serial-adapter.js",
-    "utils.js"
-  ],
-  "moziot": {
-    "api": {
-      "min": 2,
-      "max": 2
-    },
-    "plugin": true,
-    "exec": "{nodeLoader} {path}",
-    "config": {
+  "manifest_version": 1,
+  "name": "Serial",
+  "options": {
+    "default": {
       "ports": [
         {
           "name": "arduino-usb",
@@ -94,5 +61,7 @@
         }
       }
     }
-  }
+  },
+  "short_name": "Serial",
+  "version": "0.5.0"
 }

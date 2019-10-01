@@ -11,6 +11,7 @@
 const USE_NET = false;
 const SHOW_RX_DATA = false;
 
+const manifest = require('./manifest.json');
 const Packet = require('./packet');
 
 const {
@@ -90,13 +91,12 @@ class SerialThing extends Device {
 
 class SerialAdapter extends Adapter {
 
-  constructor(addonManager, manifest, port) {
+  constructor(addonManager, port) {
     // We don't yet know the name of the adapter, so we set it to
     // unknown for now, and replace it later once we get the information
     // from the device.
-    super(addonManager, 'serial-unknown', manifest.name);
+    super(addonManager, 'serial-unknown', manifest.id);
 
-    this.manifest = manifest;
     this.port = port;
 
     if (USE_NET) {
@@ -330,34 +330,18 @@ function serialPortMatches(port, portsConfig) {
   return false;
 }
 
-function loadSerial(addonManager, manifest, errorCallback) {
-  let promise;
+function loadSerial(addonManager, _, errorCallback) {
+  let config;
 
-  const db = new Database(manifest.name);
-  promise = db.open().then(() => {
+  const db = new Database(manifest.id);
+  db.open().then(() => {
     return db.loadConfig();
-  }).then((config) => {
-    if (!Array.isArray(config.ports)) {
-      const ports = [];
+  }).then((cfg) => {
+    config = cfg;
 
-      for (const portName in config.ports) {
-        const port = Object.assign({}, config.ports[portName]);
-        port.name = portName;
-        ports.push(port);
-      }
-
-      manifest.moziot.config.ports = ports;
-      return db.saveConfig({ports});
-    }
-  });
-
-  promise.then(() => {
-    const portsConfig = manifest.moziot &&
-                        manifest.moziot.config &&
-                        manifest.moziot.config.ports;
+    const portsConfig = config && config.ports;
     if (!portsConfig) {
-      errorCallback(manifest.name,
-                    'No moziot.config.ports found in package.json');
+      errorCallback(manifest.id, 'No ports configured.');
       return;
     }
 
@@ -365,20 +349,20 @@ function loadSerial(addonManager, manifest, errorCallback) {
       const matchingPorts =
         ports.filter((port) => serialPortMatches(port, portsConfig));
       if (matchingPorts.length == 0) {
-        errorCallback(manifest.name, 'No matching serial port found');
+        errorCallback(manifest.id, 'No matching serial port found.');
         return;
       }
       for (const port of matchingPorts) {
-        new SerialAdapter(addonManager, manifest, port);
+        new SerialAdapter(addonManager, port);
       }
     }).catch((e) => {
-      errorCallback(manifest.name, e);
+      errorCallback(manifest.id, e);
     });
   });
 }
 
-function loadNet(addonManager, manifest, _errorCallback) {
-  new SerialAdapter(addonManager, manifest, 'tcp');
+function loadNet(addonManager) {
+  new SerialAdapter(addonManager, 'tcp');
 }
 
 if (USE_NET) {
