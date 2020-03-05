@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
+const manifest = require('./manifest.json');
 const SerialPort = require('serialport');
 const utils = require('./utils');
 
@@ -77,11 +77,7 @@ SerialPort.list().then((ports) => {
   console.log('===== All ports found =====');
   printPorts(ports);
 
-  const manifestData = fs.readFileSync('package.json');
-  const manifest = JSON.parse(manifestData);
-  const portsConfig = manifest.moziot &&
-                      manifest.moziot.config &&
-                      manifest.moziot.config.ports;
+  const portsConfig = manifest.options.default.ports;
   if (!portsConfig) {
     console.log('No moziot.config.ports found in package.json');
     return;
