@@ -10,14 +10,14 @@ function serialPortMatches(port, portsConfig) {
                        'vendorId',
                        'productId',
                        'serialNumber',
-                       'comName'];
+                       'path'];
 
   // Under OSX, SerialPort.list returns the /dev/tty.usbXXX instead
   // /dev/cu.usbXXX. tty.usbXXX requires DCD to be asserted which
   // isn't necessarily the case for usb-to-serial dongles.
   // The cu.usbXXX doesn't care about DCD.
-  if (port.comName.startsWith('/dev/tty.usb')) {
-    port.comName = port.comName.replace('/dev/tty', '/dev/cu');
+  if (port.path.startsWith('/dev/tty.usb')) {
+    port.path = port.path.replace('/dev/tty', '/dev/cu');
   }
   for (const name in portsConfig) {
     const portConfig = portsConfig[name];
@@ -59,10 +59,10 @@ function printPorts(ports) {
   ];
 
   for (const port of ports) {
-    if (port.comName.startsWith('/dev/tty.usb')) {
-      port.comName = port.comName.replace('/dev/tty', '/dev/cu');
+    if (port.path.startsWith('/dev/tty.usb')) {
+      port.path = port.path.replace('/dev/tty', '/dev/cu');
     }
-    lines.push([port.comName,
+    lines.push([port.path,
                 port.vendorId || '',
                 port.productId || '',
                 port.serialNumber || '',

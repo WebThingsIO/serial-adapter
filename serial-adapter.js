@@ -118,15 +118,15 @@ class SerialAdapter extends Adapter {
         console.log('Server', hostStr, 'shutdown');
       });
     } else {
-      this.serialport = new SerialPort(port.comName, {
+      this.serialport = new SerialPort(port.path, {
         baudRate: port.baudRate,
       }, (err) => {
         if (err) {
-          console.error('Unable to open serial port', port.comName);
+          console.error('Unable to open serial port', port.path);
           console.error(err);
           return;
         }
-        console.log('Opened matching serial port @', port.comName);
+        console.log('Opened matching serial port @', port.path);
         this.onOpen();
       });
     }
@@ -280,7 +280,7 @@ function serialPortMatches(port, portsConfig) {
                        'vendorId',
                        'productId',
                        'serialNumber',
-                       'comName'];
+                       'path'];
 
   if (!Array.isArray(portsConfig)) {
     const newConfig = [];
@@ -296,8 +296,8 @@ function serialPortMatches(port, portsConfig) {
   // /dev/cu.usbXXX. tty.usbXXX requires DCD to be asserted which
   // isn't necessarily the case for usb-to-serial dongles.
   // The cu.usbXXX doesn't care about DCD.
-  if (port.comName.startsWith('/dev/tty.usb')) {
-    port.comName = port.comName.replace('/dev/tty', '/dev/cu');
+  if (port.path.startsWith('/dev/tty.usb')) {
+    port.path = port.path.replace('/dev/tty', '/dev/cu');
   }
   for (const portConfig of portsConfig) {
     const configKeys =
@@ -343,6 +343,19 @@ function loadSerial(addonManager, _, errorCallback) {
     if (!portsConfig) {
       errorCallback(manifest.id, 'No ports configured.');
       return;
+    }
+
+    let modified = false;
+    for (const port of portsConfig) {
+      if (port.comName) {
+        port.path = port.comName;
+        delete port.comName;
+        modified = true;
+      }
+    }
+
+    if (modified) {
+      db.saveConfig(config);
     }
 
     SerialPort.list().then((ports) => {

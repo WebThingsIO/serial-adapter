@@ -49,7 +49,7 @@
               "serialNumber": {
                 "type": "string"
               },
-              "comName": {
+              "path": {
                 "type": "string"
               },
               "baudRate": {

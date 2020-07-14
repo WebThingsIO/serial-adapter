@@ -23,7 +23,7 @@ Each entry under `ports` is treated like a filter. The name (i.e. `arduino-usb`)
 | vendorId | Matches the 4 character hex vendor ID associated with a USB serial port |
 | productId | Matches the 4 character hex product ID associated with a USB serial port |
 | serialNumber | Matches the serial number associated with a USB serial port |
-| comName | Matches the name of the serial port (this works for both USB and non-USB serial ports) |
+| path | Matches the name of the serial port (this works for both USB and non-USB serial ports) |
 
 Each of the filters checks the actual string starts with the string provided in the filter. For example, the MKR1000 advertises a manufacturer of `Arduino_LLC` and since it starts with `Arduino` the `arduino-usb`
 filter will match and that serial port will be opened.
