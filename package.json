@@ -1,27 +1,27 @@
 {
   "name": "serial-adapter",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Serial MCU Adapter",
   "main": "index.js",
   "scripts": {
     "lint": "eslint ."
   },
-  "author": "Mozilla IoT",
+  "author": "WebThingsIO",
   "license": "MPL-2.0",
-  "homepage": "https://github.com/mozilla-iot/serial-adapter",
+  "homepage": "https://github.com/WebThingsIO/serial-adapter",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mozilla-iot/serial-adapter.git"
+    "url": "https://github.com/WebThingsIO/serial-adapter.git"
   },
   "bugs": {
-    "url": "https://github.com/mozilla-iot/serial-adapter/issues"
+    "url": "https://github.com/WebThingsIO/serial-adapter/issues"
   },
   "dependencies": {
-    "serialport": "^8.0.8"
+    "serialport": "^9.0.1"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
-    "eslint": "^7.5.0"
+    "eslint": "^7.10.0"
   },
   "files": [
     "LICENSE",

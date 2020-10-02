@@ -1,5 +1,5 @@
 {
-  "author": "Mozilla IoT",
+  "author": "WebThingsIO",
   "description": "Serial MCU Adapter",
   "gateway_specific_settings": {
     "webthings": {
@@ -9,7 +9,7 @@
       "strict_min_version": "0.10.0"
     }
   },
-  "homepage_url": "https://github.com/mozilla-iot/serial-adapter",
+  "homepage_url": "https://github.com/WebThingsIO/serial-adapter",
   "id": "serial-adapter",
   "license": "MPL-2.0",
   "manifest_version": 1,
@@ -63,5 +63,5 @@
     }
   },
   "short_name": "Serial",
-  "version": "0.5.2"
+  "version": "0.5.3"
 }
